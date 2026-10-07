@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wake Me Up!</title>
+<style>
+  :root{--bg:#1b1340;--card:#2a1f5e;--yellow:#ffd23f;--pink:#ff5d8f;--teal:#2ec4b6;--muted:#a99ee0}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0%,#3a2a8a,var(--bg) 60%);
+    font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;color:#fff;
+    display:flex;justify-content:center;padding:24px 16px;overflow-x:hidden}
+  main{width:100%;max-width:480px;text-align:center}
+  h1{font-size:2.4rem;margin:0;color:var(--yellow);text-shadow:3px 3px 0 var(--pink);
+    animation:wobble 2.5s ease-in-out infinite}
+  .tag{color:var(--muted);margin:4px 0 18px}
+  @keyframes wobble{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+  .card{background:var(--card);border-radius:22px;padding:16px;margin:12px 0;box-shadow:0 8px 0 #150e33}
+  .clock{font-size:2.8rem;font-weight:bold;color:var(--teal);letter-spacing:1px}
+  .small{color:var(--muted);font-size:.85rem}
+  .mascot{font-size:4.5rem;animation:bob 2s ease-in-out infinite;display:inline-block}
+  @keyframes bob{50%{transform:translateY(-10px)}}
+  .picker{display:flex;justify-content:center;align-items:center;gap:8px;margin:10px 0}
+  .picker input{width:84px;font:inherit;font-size:2.2rem;font-weight:bold;text-align:center;
+    background:var(--card);color:var(--yellow);border:3px solid var(--pink);border-radius:16px;padding:6px}
+  .picker span{font-size:2.2rem}
+  .ampm{display:flex;flex-direction:column;gap:6px;margin-left:8px}
+  .ampm button{font:inherit;padding:6px 12px;border-radius:12px;border:0;background:var(--card);color:#fff;cursor:pointer}
+  .ampm button.on{background:var(--pink)}
+  .btn{font:inherit;font-size:1.3rem;font-weight:bold;border:0;border-radius:18px;padding:12px 28px;
+    color:#fff;background:var(--pink);cursor:pointer;box-shadow:0 6px 0 #b83560;transition:transform .1s}
+  .btn:active{transform:translateY(4px);box-shadow:0 2px 0 #b83560}
+  .btn.teal{background:var(--teal);color:var(--bg);box-shadow:0 6px 0 #1b8a80}
+  .btn.ghost{background:var(--card);box-shadow:0 6px 0 #150e33;font-size:1rem}
+  .status{min-height:3em;margin-top:14px;color:var(--muted)}
+  .hide{display:none!important}
+  #ring{animation:flash .7s steps(1) infinite;border-radius:24px;padding:12px}
+  @keyframes flash{0%{background:var(--pink)}50%{background:#ff9f1c}}
+  #ring h2{font-size:2.6rem;margin:6px 0}
+  .shake{font-size:6rem;display:inline-block;animation:shake .3s infinite}
+  @keyframes shake{25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+  .vid{position:relative;border-radius:20px;overflow:hidden;background:#000;border:4px solid var(--yellow)}
+  video{width:100%;display:block;transform:scaleX(-1)}
+  .bar{height:24px;background:var(--card);border-radius:14px;overflow:hidden;margin:12px 0}
+  .bar div{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--yellow));transition:width .1s}
+  #camStatus{font-weight:bold;font-size:1.1rem}
+  .confetti{position:fixed;top:-40px;font-size:2rem;animation:fall linear forwards;pointer-events:none}
+  @keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+  details{margin-top:18px;color:var(--muted);font-size:.85rem}
+  details input{margin-top:8px;max-width:100%}
+  #mathBox input{font:inherit;font-size:1.4rem;width:100px;text-align:center;border-radius:12px;border:3px solid var(--yellow);padding:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>⏰ Wake Me Up! ⏰</h1>
+  <p class="tag">The alarm that won't let you cheat 😈</p>
+
+  <!-- SET -->
+  <section id="setScreen">
+    <div class="card">
+      <div class="small">🕌 Riyadh time right now</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+    <div class="mascot" id="mascot">😴</div>
+    <div>Wake me at…</div>
+    <div class="picker">
+      <input id="hh" type="number" min="1" max="12" value="7">
+      <span>:</span>
+      <input id="mm" type="number" min="0" max="59" value="00">
+      <div class="ampm">
+        <button id="am" class="on">☀️ AM</button>
+        <button id="pm">🌙 PM</button>
+      </div>
+    </div>
+    <button class="btn" id="setBtn">🚀 Set Alarm</button>
+    <div class="status" id="status"></div>
+    <details>
+      <summary>🔊 Alarm sound</summary>
+      <div>Uses <code>alarm.mp3</code> next to this file, or pick one:</div>
+      <input type="file" id="soundFile" accept="audio/*">
+    </details>
+  </section>
+
+  <!-- RINGING -->
+  <section id="ring" class="hide">
+    <div class="shake">🥴</div>
+    <h2>🚨 WAKE UP!! 🚨</h2>
+    <p>Prove you're awake to silence me!<br>Open your eyes &amp; look at the camera 👀</p>
+    <button class="btn teal" id="camBtn">📸 Open Camera</button>
+  </section>
+
+  <!-- CAMERA -->
+  <section id="camScreen" class="hide">
+    <p style="color:var(--yellow);font-weight:bold">Look at the camera &amp; keep your eyes OPEN 👀</p>
+    <div class="vid"><video id="video" autoplay playsinline muted></video></div>
+    <div id="camStatus">Starting camera…</div>
+    <div class="bar"><div id="fill"></div></div>
+    <button class="btn ghost" id="backBtn">⬅ Back (alarm keeps ringing)</button>
+    <div id="mathBox" class="card hide">
+      <p>😅 Camera AI isn't available. Solve this instead:</p>
+      <div id="mathQ" style="font-size:1.6rem;margin-bottom:8px"></div>
+      <input id="mathA" type="number"> <button class="btn teal" id="mathBtn" style="font-size:1rem;padding:8px 16px">Check</button>
+    </div>
+  </section>
+
+  <!-- AWAKE -->
+  <section id="awake" class="hide">
+    <div style="font-size:4rem;margin-top:30px">🎉☀️🎉</div>
+    <h2 style="font-size:2.6rem;color:var(--yellow);margin:6px 0">Good Morning!</h2>
+    <p>Awake confirmed. Alarm off.<br>Now go be awesome 💪</p>
+    <button class="btn" id="againBtn">Set another alarm</button>
+  </section>
+</main>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const NEEDED = 20;                       // consecutive "eyes open" frames
+let alarm = null, firedKey = null, ringing = false, pm = false;
+let audio = new Audio("alarm.mp3"); audio.loop = true;
+let useBeep = false, beepTimer = null, actx = null;
+let landmarker = null, stream = null, raf = null, streak = 0;
+
+/* ---------- Riyadh time ---------- */
+function riyadh(){
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Riyadh",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"})
+    .formatToParts(new Date()).map(x=>[x.type,+x.value]));
+  return {h:p.hour,m:p.minute,s:p.second};
+}
+const fmt12 = (h,m,s) => `${String(h%12||12).padStart(2,"0")}:${String(m).padStart(2,"0")}${s==null?"":":"+String(s).padStart(2,"0")} ${h>=12?"PM":"AM"}`;
+const show = id => ["setScreen","ring","camScreen","awake"].forEach(s=>$(s).classList.toggle("hide",s!==id));
+
+/* ---------- clock + alarm check ---------- */
+setInterval(()=>{
+  const t = riyadh();
+  $("clock").textContent = fmt12(t.h,t.m,t.s);
+  const key = t.h+":"+t.m;
+  if(alarm && !ringing && t.h===alarm.h && t.m===alarm.m && firedKey!==key){ firedKey = key; startRinging(); }
+},250);
+
+/* ---------- set / cancel ---------- */
+$("am").onclick = ()=>{pm=false;$("am").classList.add("on");$("pm").classList.remove("on")};
+$("pm").onclick = ()=>{pm=true;$("pm").classList.add("on");$("am").classList.remove("on")};
+
+$("soundFile").onchange = e => { const f = e.target.files[0]; if(f){ audio = new Audio(URL.createObjectURL(f)); audio.loop = true; } };
+
+$("setBtn").onclick = () => {
+  if(alarm){ alarm = null; $("mascot").textContent="😴"; $("setBtn").textContent="🚀 Set Alarm";
+    $("status").textContent="Alarm cancelled. Back to sleep? 😏"; return; }
+  const h = parseInt($("hh").value), m = parseInt($("mm").value);
+  if(!(h>=1&&h<=12&&m>=0&&m<=59)){ $("status").textContent="😬 That time doesn't look right (1–12 : 0–59)."; return; }
+  alarm = {h:(h%12)+(pm?12:0), m}; firedKey = null;
+  // unlock audio now (browsers need a click before sound can play later)
+  audio.play().then(()=>{audio.pause();audio.currentTime=0}).catch(()=>{});
+  actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  $("mascot").textContent="😎"; $("setBtn").textContent="❌ Cancel Alarm";
+  $("status").innerHTML = `✅ Alarm armed for <b>${fmt12(alarm.h,alarm.m)}</b><br>Keep this tab open. Sweet dreams! 💤`;
+};
+
+/* ---------- ringing ---------- */
+function beep(){
+  if(!actx) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type="square"; o.frequency.value=880; g.gain.value=.15;
+  o.connect(g); g.connect(actx.destination); o.start(); o.stop(actx.currentTime+.25);
+}
+function startRinging(){
+  ringing = true; show("ring"); document.title = "🚨 WAKE UP!";
+  audio.currentTime = 0;
+  audio.play().catch(()=>{ useBeep = true; beepTimer = setInterval(beep,600); });
+}
+function stopRinging(){
+  ringing = false; audio.pause(); clearInterval(beepTimer); useBeep = false; document.title = "Wake Me Up!";
+}
+
+/* ---------- camera + eye check ---------- */
+async function loadModel(){
+  if(landmarker) return landmarker;
+  const v = "0.10.14";
+  const { FaceLandmarker, FilesetResolver } = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${v}`);
+  const fs = await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${v}/wasm`);
+  landmarker = await FaceLandmarker.createFromOptions(fs,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"},
+    runningMode:"VIDEO", numFaces:1, outputFaceBlendshapes:true });
+  return landmarker;
+}
+
+$("camBtn").onclick = async () => {
+  show("camScreen"); streak = 0; $("fill").style.width="0";
+  $("mathBox").classList.add("hide");
+  $("camStatus").textContent = "Loading face detector… ⏳"; $("camStatus").style.color="var(--yellow)";
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}});
+    $("video").srcObject = stream;
+    await loadModel();
+    loop();
+  }catch(err){
+    console.error(err);
+    $("camStatus").textContent = "Camera/AI unavailable 😢"; $("camStatus").style.color="var(--pink)";
+    startMath();
+  }
+};
+
+function loop(){
+  const vid = $("video");
+  if(!stream) return;
+  if(vid.readyState >= 2){
+    const r = landmarker.detectForVideo(vid, performance.now());
+    let txt = "Looking for your face… 🔍", col = "var(--pink)";
+    if(r.faceBlendshapes && r.faceBlendshapes.length){
+      const c = Object.fromEntries(r.faceBlendshapes[0].categories.map(x=>[x.categoryName,x.score]));
+      const open = c.eyeBlinkLeft < .35 && c.eyeBlinkRight < .35;
+      if(open){ streak++; txt = `Eyes open! Keep going… ${Math.min(streak,NEEDED)}/${NEEDED} 😲`; col="var(--yellow)"; }
+      else { streak = 0; txt = "Eyes closed or looking away! 😴"; }
+    } else streak = 0;
+    $("camStatus").textContent = txt; $("camStatus").style.color = col;
+    $("fill").style.width = (Math.min(streak,NEEDED)/NEEDED*100)+"%";
+    if(streak >= NEEDED){ victory(); return; }
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+function closeCam(){
+  cancelAnimationFrame(raf);
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+}
+$("backBtn").onclick = () => { closeCam(); show("ring"); };
+
+/* fallback: math puzzle */
+let ans = 0;
+function startMath(){
+  const a = 12+Math.floor(Math.random()*30), b = 3+Math.floor(Math.random()*9);
+  ans = a*b; $("mathQ").textContent = `${a} × ${b} = ?`; $("mathA").value = "";
+  $("mathBox").classList.remove("hide");
+}
+$("mathBtn").onclick = () => { if(+$("mathA").value === ans) victory(); else { $("mathQ").textContent += " 🙈 nope!"; setTimeout(startMath,700); } };
+
+/* ---------- victory ---------- */
+function victory(){
+  closeCam(); stopRinging(); alarm = null; show("awake");
+  $("mascot").textContent="😴"; $("setBtn").textContent="🚀 Set Alarm";
+  for(let i=0;i<40;i++){
+    const e = document.createElement("div"); e.className="confetti";
+    e.textContent = ["🎉","☀️","⭐","🎊","💛"][i%5];
+    e.style.left = Math.random()*100+"vw"; e.style.animationDuration = 2+Math.random()*3+"s";
+    document.body.appendChild(e); setTimeout(()=>e.remove(),5500);
+  }
+}
+$("againBtn").onclick = () => { $("status").textContent=""; show("setScreen"); };
+</script>
+</body>
+</html>
